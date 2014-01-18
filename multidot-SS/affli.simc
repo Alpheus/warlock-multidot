@@ -1,8 +1,9 @@
 #!./simc 
 
 threads=8
-max_time=180
-#max_time=420
+#max_time=180
+max_time=420
+iterations=10000
 
 # Enemy
 input=fluffy.simc

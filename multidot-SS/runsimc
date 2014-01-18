@@ -7,6 +7,7 @@ export PROFILE_PATH=~/Documents/Projects/Alarinth/multidot-SS/
 export PROFILE=${BASE_DIR}/affli.simc
 
 $SIMC $PROFILE > /dev/null
-export DPS=`xpath $RESULTS_FILE '//simulationcraft/targets/players[name="Fluffy"]/dps/@value' 2> /dev/null`
 
-echo $DPS
+# DEBUG for XML parse
+# export DPS=`xpath $RESULTS_FILE '//simulationcraft/targets/players[name="Fluffy"]/dps/@value' 2> /dev/null`
+# echo $DPS

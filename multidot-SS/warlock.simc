@@ -45,13 +45,15 @@ actions+=/restart_sequence,name=multidot,if=buff.soulburn.up
 actions+=/soul_swap,if=buff.soulburn.up
 
 #- Multidot
+# --- Multidot fillers ---
 # Apply Haunt/MF/UA inbetween Inhale/Exhale combos
 actions+=/haunt,if=debuff.haunt.down&buff.soul_swap.up&buff.soul_swap.remains>gcd
 actions+=/malefic_grasp,interrupt=1,if=active_enemies>1&buff.soul_swap.up&buff.soul_swap.remains>gcd
 actions+=/unstable_affliction,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)
 actions+=/corruption,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)
 
-# This is a 4-part sequence comprising I-inhale, E-exhale. The sample parse on the report should look something like IXEIXE where X is a filler.
+# --- Multidot sequence ---
+# This is a 5-part sequence comprising I-inhale, E-exhale, R-reset. The sample parse on the report should look something like IXEIXER where X is a filler (look above).
 actions+=/sequence,name=multidot,if=active_enemies>1&buff.soulburn.down&dot.agony.ticking&dot.agony.spell_power>90000:soul_swap:soul_swap,target=enemy2,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:soul_swap,target=enemy2,if=buff.soul_swap.down:soul_swap,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:restart_sequence,name=multidot
 
 
