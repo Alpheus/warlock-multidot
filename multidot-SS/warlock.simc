@@ -26,9 +26,13 @@ actions.precombat+=/jade_serpent_potion
 
 #- Pull
 actions=curse_of_the_elements,if=debuff.magic_vulnerability.down
-actions+=/use_item,name=gloves_of_the_horned_nightmare
 actions+=/jade_serpent_potion,if=buff.bloodlust.react|target.health.pct<=20
+
 actions+=/berserking,if=trinket.stacking_proc.intellect.react
+actions+=/use_item,name=gloves_of_the_horned_nightmare,if=trinket.stacking_proc.intellect.react
+
+actions+=/soulburn,if=(trinket.proc.intellect.react&trinket.stacking_proc.intellect.react>=9)&buff.soulburn.down
+actions+=/soulburn,if=!dot.agony.ticking&!dot.corruption.ticking&!dot.unstable_affliction.ticking
 
 # Modified to wait for higher trinket charges
 actions+=/dark_soul,if=!talent.archimondes_darkness.enabled|(talent.archimondes_darkness.enabled&(charges=2|trinket.proc.intellect.react|trinket.stacking_proc.intellect.react>6|target.health.pct<=10))
@@ -37,13 +41,19 @@ actions+=/service_pet,if=talent.grimoire_of_service.enabled
 actions+=/summon_doomguard
 
 #- High Prio (Mega RNG procs)
+actions+=/restart_sequence,name=multidot,if=buff.soulburn.up
 actions+=/soul_swap,if=buff.soulburn.up
-actions+=/soulburn,if=(trinket.proc.intellect.react&trinket.stacking_proc.intellect.react>6)
 
 #- Multidot
-actions+=/sequence,name=multidot,if=active_enemies>1&buff.soulburn.down&dot.agony.ticking:soul_swap:soul_swap,target=enemy2,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:soul_swap,target=enemy2:soul_swap,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:restart_sequence,name=multidot
-actions+=/haunt,if=active_enemies>1&!in_flight_to_target&remains<cast_time+travel_time+tick_time&shard_react&buff.soul_swap.up&buff.soul_swap.remains>gcd
-actions+=/malefic_grasp,interrupt=1,if=active_enemies>1&buff.soul_swap.up
+# Apply Haunt/MF/UA inbetween Inhale/Exhale combos
+actions+=/haunt,if=debuff.haunt.down&buff.soul_swap.up&buff.soul_swap.remains>gcd
+actions+=/malefic_grasp,interrupt=1,if=active_enemies>1&buff.soul_swap.up&buff.soul_swap.remains>gcd
+actions+=/unstable_affliction,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)
+actions+=/corruption,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)
+
+# This is a 4-part sequence comprising I-inhale, E-exhale. The sample parse on the report should look something like IXEIXE where X is a filler.
+actions+=/sequence,name=multidot,if=active_enemies>1&buff.soulburn.down&dot.agony.ticking&dot.agony.spell_power>90000:soul_swap:soul_swap,target=enemy2,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:soul_swap,target=enemy2,if=buff.soul_swap.down:soul_swap,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:restart_sequence,name=multidot
+
 
 #- High Prio
 #actions+=/soulburn,if=(buff.dark_soul.up|trinket.proc.intellect.react|trinket.stacking_proc.intellect.react>6)&(dot.agony.ticks_remain<=action.agony.add_ticks%2|dot.corruption.ticks_remain<=action.corruption.add_ticks%2|dot.unstable_affliction.ticks_remain<=action.unstable_affliction.add_ticks%2)&shard_react
@@ -54,11 +64,11 @@ actions+=/malefic_grasp,interrupt=1,if=active_enemies>1&buff.soul_swap.up
 actions+=/haunt,if=!in_flight_to_target&remains<cast_time+travel_time+tick_time&shard_react&target.health.pct<=20
 actions+=/drain_soul,interrupt=1,chain=1,if=target.health.pct<=20
 actions+=/haunt,if=!in_flight_to_target&remains<cast_time+travel_time+tick_time&shard_react
-actions+=/agony,if=time>=60&(tick_damage*n_ticks*(100+crit_pct_current)>4*dot.agony.tick_dmg*dot.agony.ticks_remain*(100+dot.agony.crit_pct))&miss_react
+actions+=/agony,if=(tick_damage*n_ticks*(100+crit_pct_current)>4*dot.agony.tick_dmg*dot.agony.ticks_remain*(100+dot.agony.crit_pct))&miss_react
 
 #- Secondary dots
-actions+=/corruption,if=time>=60&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)&miss_react
-actions+=/unstable_affliction,if=time>=60&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)&miss_react
+actions+=/corruption,if=((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)&miss_react
+actions+=/unstable_affliction,if=((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)&miss_react
 
 
 #- Filler
@@ -82,7 +92,7 @@ feet=boneinlaid_sandals,id=105493,upgrade=2,gems=320haste_60hit,enchant=140maste
 finger1=signet_of_the_dinomancers,id=105606,upgrade=2,gems=320haste
 finger2=extinguished_ember_of_galakras,id=105498,upgrade=2,reforge=hit_mastery
 trinket1=black_blood_of_yshaarj,id=105648,upgrade=2
-trinket2=purified_bindings_of_immerseus,id=105422,upgrade=2
+trinket2=kardris_toxic_totem,id=105540,upgrade=2
 main_hand=arcweaver_spell_sword,id=105550,upgrade=2,gems=80int_160haste_60int,enchant=jade_spirit,reforge=crit_mastery
 off_hand=revelations_of_yshaarj,id=105650,upgrade=2,gems=80int_160haste_60int,enchant=165int
 
