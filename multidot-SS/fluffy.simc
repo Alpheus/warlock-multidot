@@ -1,0 +1,8 @@
+#!./simc
+
+enemy="Fluffy"
+level=93
+race=humanoid
+role=tank
+position=front
+talents=000000

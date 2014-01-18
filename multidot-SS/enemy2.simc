@@ -1,0 +1,8 @@
+#!./simc 
+
+enemy="enemy2"
+level=93
+race=humanoid
+role=tank
+position=front
+talents=000000

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export BASE_DIR=.
+export RESULTS_FILE=${BASE_DIR}/results.xml
+export SIMC=/Applications/SimC/simc
+export PROFILE_PATH=~/Documents/Projects/Alarinth/multidot-SS/
+export PROFILE=${BASE_DIR}/affli.simc
+
+$SIMC $PROFILE > /dev/null
+export DPS=`xpath $RESULTS_FILE '//simulationcraft/targets/players[name="Fluffy"]/dps/@value' 2> /dev/null`
+
+echo $DPS

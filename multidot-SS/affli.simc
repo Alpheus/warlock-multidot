@@ -1,0 +1,14 @@
+#!./simc 
+
+threads=8
+max_time=180
+
+# Enemy
+input=fluffy.simc
+input=enemy2.simc
+
+# APL
+input=warlock.simc
+#input=Warlock_Affliction_T16H.simc
+
+html=results.html
