@@ -22,6 +22,16 @@ actions.precombat+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enable
 actions.precombat+=/service_pet,if=talent.grimoire_of_service.enabled
 actions.precombat+=/jade_serpent_potion
 
+# Conditionals that give me AIDS
+$(trinket_overlap)=(trinket.stacking_proc.intellect.react&trinket.proc.intellect.up)
+$(trinket_overlap_remaining)=((trinket.stacking_proc.intellect.remaining>trinket.proc.intellect.remaining)*trinket.stacking_proc.intellect.remaining+(trinket.proc.intellect.remaining>trinket.stacking_proc.intellect.remaining)*trinket.proc.intellect.remaining)
+$(haste_overlap)=(buff.tempus_repit.up&buff.bloodlust.up)
+$(haste_overlap_remaining)=((buff.tempus_repit.react>buff.bloodlust.remains)*buff.tempus_repit.react+(buff.bloodlust.remains>buff.tempus_repit.react)*buff.bloodlust.remains)
+$(alert_PETA_overlap)=($(trinket_overlap)&$(haste_overlap))
+$(alert_PETA_overlap_remaining)=(($(haste_overlap_remaining)>$(trinket_overlap_remaining))*$(haste_overlap_remaining)+($(trinket_overlap_remaining)>$(haste_overlap_remaining)*$(trinket_overlap_remaining)))
+
+$(multi_dot_gate)=(active_enemies>1&dot.agony.ticking&(dot.agony.spell_power>90000&dot.agony.haste_pct>40)|(dot.agony.spell_power>80000))
+
 # Executed every time the actor is available.
 
 #- Pull
@@ -31,8 +41,8 @@ actions+=/jade_serpent_potion,if=buff.bloodlust.react|target.health.pct<=20
 actions+=/berserking,if=trinket.stacking_proc.intellect.react
 actions+=/use_item,name=gloves_of_the_horned_nightmare,if=trinket.stacking_proc.intellect.react
 
-actions+=/soulburn,if=(trinket.proc.intellect.react&trinket.stacking_proc.intellect.react>=9)&buff.soulburn.down
-actions+=/soulburn,if=!dot.agony.ticking&!dot.corruption.ticking&!dot.unstable_affliction.ticking
+actions+=/soulburn,if=$(alert_PETA_overlap)&$(alert_PETA_overlap_remaining)<=gcd&buff.soulburn.down
+actions+=/soulburn,if=$(trinket_overlap)&$(trinket_overlap_remaining)<=gcd&buff.soulburn.down
 
 # Modified to wait for higher trinket charges
 actions+=/dark_soul,if=!talent.archimondes_darkness.enabled|(talent.archimondes_darkness.enabled&(charges=2|trinket.proc.intellect.react|trinket.stacking_proc.intellect.react>6|target.health.pct<=10))
@@ -47,20 +57,20 @@ actions+=/soul_swap,if=buff.soulburn.up
 #- Multidot
 # --- Multidot fillers ---
 # Apply Haunt/MF/UA inbetween Inhale/Exhale combos
-actions+=/haunt,if=debuff.haunt.down&buff.soul_swap.up&buff.soul_swap.remains>gcd
-actions+=/malefic_grasp,interrupt=1,if=active_enemies>1&buff.soul_swap.up&buff.soul_swap.remains>gcd
-actions+=/unstable_affliction,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)
-actions+=/corruption,if=buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)
+actions+=/haunt,if=$(multi_dot_gate)&debuff.haunt.down&buff.soul_swap.up&buff.soul_swap.remains>gcd
+actions+=/malefic_grasp,interrupt=1,if=$(multi_dot_gate)&buff.soul_swap.up&buff.soul_swap.remains>gcd
+
+# Re-apply low dots after Exhale
+actions+=/unstable_affliction,if=$(multi_dot_gate)&buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<cast_time+gcd)
+actions+=/corruption,if=$(multi_dot_gate)&buff.soul_swap.down&((stat.spell_power>spell_power&ticks_remain<add_ticks%2)|(stat.spell_power>spell_power*1.5)|remains<gcd)
 
 # --- Multidot sequence ---
 # This is a 5-part sequence comprising I-inhale, E-exhale, R-reset. The sample parse on the report should look something like IXEIXER where X is a filler (look above).
-actions+=/sequence,name=multidot,if=active_enemies>1&buff.soulburn.down&dot.agony.ticking&dot.agony.spell_power>90000:soul_swap:soul_swap,target=enemy2,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:soul_swap,target=enemy2,if=buff.soul_swap.down:soul_swap,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:restart_sequence,name=multidot
-
+actions+=/sequence,name=multidot,if=$(multi_dot_gate)&buff.soulburn.down:soul_swap:soul_swap,target=enemy2,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:soul_swap,target=enemy2,if=buff.soul_swap.down:soul_swap,if=buff.soul_swap.up&buff.soul_swap.remains<gcd:restart_sequence,name=multidot
 
 #- High Prio
-#actions+=/soulburn,if=(buff.dark_soul.up|trinket.proc.intellect.react|trinket.stacking_proc.intellect.react>6)&(dot.agony.ticks_remain<=action.agony.add_ticks%2|dot.corruption.ticks_remain<=action.corruption.add_ticks%2|dot.unstable_affliction.ticks_remain<=action.unstable_affliction.add_ticks%2)&shard_react
-#actions+=/soulburn,if=(dot.unstable_affliction.ticks_remain<=1|dot.corruption.ticks_remain<=1|dot.agony.ticks_remain<=1)&shard_react&target.health.pct<=20
-
+actions+=/soulburn,if=(buff.dark_soul.up|trinket.proc.intellect.react|trinket.stacking_proc.intellect.react>6)&(dot.agony.ticks_remain<=action.agony.add_ticks%2|dot.corruption.ticks_remain<=action.corruption.add_ticks%2|dot.unstable_affliction.ticks_remain<=action.unstable_affliction.add_ticks%2)&shard_react
+actions+=/soulburn,if=(dot.unstable_affliction.ticks_remain<=1|dot.corruption.ticks_remain<=1|dot.agony.ticks_remain<=1)&shard_react&target.health.pct<=20
 
 # Primary dots
 actions+=/haunt,if=!in_flight_to_target&remains<cast_time+travel_time+tick_time&shard_react&target.health.pct<=20
@@ -97,6 +107,24 @@ trinket1=black_blood_of_yshaarj,id=105648,upgrade=2
 trinket2=kardris_toxic_totem,id=105540,upgrade=2
 main_hand=arcweaver_spell_sword,id=105550,upgrade=2,gems=80int_160haste_60int,enchant=jade_spirit,reforge=crit_mastery
 off_hand=revelations_of_yshaarj,id=105650,upgrade=2,gems=80int_160haste_60int,enchant=165int
+
+#- Alarinth
+#head=hood_of_swirling_senses,id=105420,upgrade=2,gems=sinister_primal_160mastery_120sta_180int,reforge=crit_haste
+#neck=untainted_guardians_chain,id=104469,upgrade=2,reforge=hit_haste
+#shoulders=mantle_of_the_horned_nightmare,id=99417,upgrade=2,gems=80int_160haste_80int_160haste_120int,enchant=200int_100crit,reforge=crit_hit
+#back=xingho_breath_of_yulon,id=102246,upgrade=2,gems=80int_160haste_60int,enchant=lightweave_embroidery_3,addon=goblin_glider,reforge=crit_hit
+#chest=robes_of_the_horned_nightmare,id=99416,upgrade=2,gems=80int_160haste_80int_160haste_80int_160haste_180int,enchant=80all,reforge=crit_haste
+#wrists=bracers_of_broken_causation,id=105461,upgrade=2,enchant=180int,reforge=mastery_haste
+#hands=gloves_of_the_horned_nightmare,id=99096,upgrade=2,gems=80int_160mastery_80int_160mastery_120int,enchant=170mastery,addon=synapse_springs_mark_ii
+#waist=belt_of_ominous_trembles,id=105515,upgrade=2,gems=80int_160mastery_160mastery_120sta_320haste_120int,addon=nitro_boosts,reforge=hit_haste
+#legs=leggings_of_the_horned_nightmare,id=99426,upgrade=1,gems=320mastery_320mastery_120int,enchant=285int_165crit,reforge=crit_haste
+#feet=toxic_tornado_treads,id=104541,upgrade=2,gems=160hit_160mastery_60hit,enchant=140mastery,reforge=crit_haste
+#finger1=petrified_pennyroyal_ring,id=104447,upgrade=2,reforge=crit_haste
+#finger2=extinguished_ember_of_galakras,id=104502,upgrade=2,reforge=hit_mastery
+#trinket1=kardris_toxic_totem,id=104544,upgrade=2
+#trinket2=black_blood_of_yshaarj,id=102310,upgrade=2
+#main_hand=arcweaver_spell_sword,id=104554,upgrade=2,gems=80int_160haste_60int,enchant=jade_spirit,reforge=crit_hit
+#off_hand=revelations_of_yshaarj,id=105401,upgrade=2,gems=80int_160mastery_60int,enchant=165int
 
 # Gear Summary
 # gear_strength=80
